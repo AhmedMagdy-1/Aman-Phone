@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AMAN PHONE – Protect Your Phone</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- ── Navigation ─────────────────────── -->
+  <nav class="nav-header">
+    <a href="/" class="nav-brand">🛡️ AMAN <span>PHONE</span></a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    <div class="nav-links">
+      <a href="/"       class="nav-link{% if active_page == 'home'   %} active{% endif %}">Home</a>
+      <a href="/check"  class="nav-link{% if active_page == 'check'  %} active{% endif %}">Check</a>
+      <a href="/report" class="nav-link{% if active_page == 'report' %} active{% endif %}">Report</a>
+      {% if session.get('user') %}
+        <a href="/dashboard" class="nav-link{% if active_page == 'dashboard' %} active{% endif %}">Dashboard</a>
+        <a href="/logout" id="nav-logout-link" class="nav-link">Logout</a>
+      {% else %}
+        <a href="#" id="nav-login-link" class="nav-link">Login</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- ══════════════════════════════════════
+       HERO
+  ══════════════════════════════════════ -->
+  <section class="home-hero">
+    <div class="home-hero-inner">
+      <div class="home-hero-tag">🛡️ Mobile Theft Protection</div>
+      <h1 class="home-hero-title">
+        AMAN —<br>
+        <em>Protect Your Phone</em>
+      </h1>
+      <p class="home-hero-subtitle">
+        Instantly verify any mobile device using its IMEI number.
+        Detect stolen phones, validate authenticity, and protect yourself
+        before purchasing a second-hand device.
+      </p>
+      <div class="home-hero-cta">
+        <a href="/check"  class="btn home-btn-primary">Check a Device</a>
+        <a href="/report" class="btn home-btn-outline">Report Stolen Phone</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════
+       STATS
+  ══════════════════════════════════════ -->
+  <div class="home-stats">
+    <div class="home-stats__grid">
+
+      <div class="home-stats__card">
+        <div class="home-stats__number">+{{ total_checks }}</div>
+        <div class="home-stats__label">Devices checked</div>
+      </div>
+
+      <div class="home-stats__card">
+        <div class="home-stats__number">+{{ total_reports }}</div>
+        <div class="home-stats__label">Stolen phones reported</div>
+      </div>
+
+      <div class="home-stats__card">
+        <div class="home-stats__number">{{ total_locations }}</div>
+        <div class="home-stats__label">Locations covered</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       FEATURES
+  ══════════════════════════════════════ -->
+  <div class="home-section-wrap">
+    <div class="home-section-header">
+      <div class="home-section-eyebrow">What AMAN Does</div>
+      <h2 class="home-section-title">Everything you need to stay protected</h2>
+      <p class="home-section-subtitle">
+        A complete platform for verifying any mobile device before you buy —
+        and helping your community stay safe from phone theft.
+      </p>
+    </div>
+
+    <div class="home-features-grid">
+
+      <div class="home-feature-card">
+        <div class="home-feature-icon home-icon-blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+        </div>
+        <div class="home-feature-title">Instant Device Verification</div>
+        <p class="home-feature-desc">
+          Enter any phone's IMEI and get an immediate, reliable status check.
+          AMAN validates the number and cross-references it against our
+          database in seconds.
+        </p>
+      </div>
+
+      <div class="home-feature-card">
+        <div class="home-feature-icon home-icon-purple">📷</div>
+        <div class="home-feature-title">Scan from a Photo</div>
+        <p class="home-feature-desc">
+          No need to type manually. Simply photograph the phone box or label
+          and AMAN will automatically read and verify the device details
+          for you.
+        </p>
+      </div>
+
+      <div class="home-feature-card">
+        <div class="home-feature-icon home-icon-red">🚨</div>
+        <div class="home-feature-title">Stolen Phone Detection</div>
+        <p class="home-feature-desc">
+          Every check is matched against our database of reported stolen
+          devices in real time. If a match is found, full theft details
+          are displayed immediately.
+        </p>
+      </div>
+
+      <div class="home-feature-card">
+        <div class="home-feature-icon home-icon-orange">🔍</div>
+        <div class="home-feature-title">Suspicious Activity Alerts</div>
+        <p class="home-feature-desc">
+          AMAN monitors unusual search patterns and automatically flags
+          devices that show signs of suspicious activity — giving you
+          an extra layer of protection.
+        </p>
+      </div>
+
+      <div class="home-feature-card">
+        <div class="home-feature-icon home-icon-green">📍</div>
+        <div class="home-feature-title">Live Area Warnings</div>
+        <p class="home-feature-desc">
+          When a surge of theft reports is detected in a specific area,
+          AMAN notifies users checking devices in that location —
+          keeping the whole community informed.
+        </p>
+      </div>
+
+      <div class="home-feature-card">
+        <div class="home-feature-icon home-icon-teal">🔒</div>
+        <div class="home-feature-title">Free &amp; No Sign-Up</div>
+        <p class="home-feature-desc">
+          AMAN is completely free to use. No account, no registration —
+          just instant protection available to everyone, at any time.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       HOW IT WORKS
+  ══════════════════════════════════════ -->
+  <div class="home-how-bg">
+    <div class="home-section-wrap">
+      <div class="home-section-header">
+        <div class="home-section-eyebrow">Simple Process</div>
+        <h2 class="home-section-title">How it works</h2>
+        <p class="home-section-subtitle">
+          Three simple steps to protect yourself from stolen phones.
+        </p>
+      </div>
+
+      <div class="home-steps-grid">
+
+        <div class="home-step">
+          <span class="home-step-icon">🔍</span>
+          <div class="home-step-number">1</div>
+          <div class="home-step-title">Check Before You Buy</div>
+          <p class="home-step-desc">
+            Enter the device IMEI manually or scan a photo of the phone box.
+            AMAN checks it against the stolen device database instantly.
+          </p>
+        </div>
+
+        <div class="home-step">
+          <span class="home-step-icon">🚨</span>
+          <div class="home-step-number">2</div>
+          <div class="home-step-title">Report a Stolen Phone</div>
+          <p class="home-step-desc">
+            Lost your device? Submit a report with the IMEI, your contact
+            info, and theft location. It's added to the database immediately.
+          </p>
+        </div>
+
+        <div class="home-step">
+          <span class="home-step-icon">📍</span>
+          <div class="home-step-number">3</div>
+          <div class="home-step-title">Get Smart Location Alerts</div>
+          <p class="home-step-desc">
+            AMAN tracks theft clusters by city. When an area sees a surge
+            in reports, a live warning is shown to everyone checking
+            devices in that location.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       CTA BANNER
+  ══════════════════════════════════════ -->
+  <div class="home-cta-outer">
+    <div class="home-cta-banner">
+
+      <!-- Decorative rings -->
+      <div class="home-cta-ring home-cta-ring--1" aria-hidden="true"></div>
+      <div class="home-cta-ring home-cta-ring--2" aria-hidden="true"></div>
+
+      <div class="home-cta-inner">
+        <div class="home-cta-label">Get started today</div>
+        <h2 class="home-cta-title">Ready to verify a device?</h2>
+        <p class="home-cta-subtitle">
+          Check any phone in seconds — free, instant, and no sign-up required.
+        </p>
+        <div class="home-cta-actions">
+          <a href="/check"  class="btn home-cta-btn-primary">Check a Device →</a>
+          <a href="/report" class="btn home-cta-btn-ghost">Report Stolen Phone</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+
+  <!-- ══════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════ -->
+  <footer class="home-footer">
+    <div class="home-footer-inner">
+
+      <div class="home-footer-brand">
+        <span class="home-footer-logo">🛡️ AMAN PHONE</span>
+        <p class="home-footer-desc">
+          A smart mobile theft verification platform — helping people
+          stay protected when buying or selling second-hand phones.
+        </p>
+      </div>
+
+      <div class="home-footer-links">
+        <a href="https://linkedin.com" target="_blank" rel="noopener" class="home-footer-link" aria-label="LinkedIn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+          LinkedIn
+        </a>
+        <a href="https://github.com" target="_blank" rel="noopener" class="home-footer-link" aria-label="GitHub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          GitHub
+        </a>
+      </div>
+
+    </div>
+    <div class="home-footer-copy">
+      &copy; {{ 2025 }} AMAN PHONE. Built for the community.
+    </div>
+  </footer>
+
+  <!-- ── Login Modal ────────────────────── -->
+  <div class="login-modal-overlay" id="login-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="login-modal-card">
+
+      <button class="login-modal-close" id="modal-close" aria-label="Close login">&times;</button>
+
+      <div class="login-modal-title" id="modal-title">🔐 Admin Login</div>
+      <div class="login-modal-subtitle">Sign in to access the dashboard.</div>
+
+      <div class="login-modal-error" id="modal-error"></div>
+
+      <form id="modal-login-form">
+        <label for="modal-username">Username</label>
+        <input
+          type="text"
+          id="modal-username"
+          name="username"
+          placeholder="Enter username"
+          autocomplete="username"
+          required
+        />
+
+        <label for="modal-password">Password</label>
+        <input
+          type="password"
+          id="modal-password"
+          name="password"
+          placeholder="Enter password"
+          autocomplete="current-password"
+          required
+        />
+
+        <button type="submit" class="btn btn-primary" id="modal-submit-btn" style="margin-top: 4px;">
+          Sign In
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ── Logout Confirmation Modal ────────── -->
+  <div class="login-modal-overlay" id="logout-modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+    <div class="login-modal-card" style="max-width: 360px; text-align: center;">
+      <button class="login-modal-close" id="logout-modal-close" aria-label="Cancel logout">&times;</button>
+      <div class="login-modal-title" id="logout-modal-title" style="margin-bottom: 12px;">👋 Logout</div>
+      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6;">
+        Are you sure you want to logout?
+      </p>
+      <div class="btn-group">
+        <a href="/logout" id="logout-confirm-btn" class="btn btn-danger btn-sm">Yes, Logout</a>
+        <button id="logout-cancel-btn" class="btn btn-outline btn-sm">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

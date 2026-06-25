@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AMAN PHONE – Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ── Navigation ─────────────────────── -->
+  <nav class="nav-header">
+    <a href="/" class="nav-brand">🛡️ AMAN <span>PHONE</span></a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    <div class="nav-links">
+      <a href="/"       class="nav-link{% if active_page == 'home'   %} active{% endif %}">Home</a>
+      <a href="/check"  class="nav-link{% if active_page == 'check'  %} active{% endif %}">Check</a>
+      <a href="/report" class="nav-link{% if active_page == 'report' %} active{% endif %}">Report</a>
+      {% if session.get('user') %}
+        <a href="/dashboard" class="nav-link{% if active_page == 'dashboard' %} active{% endif %}">Dashboard</a>
+        <a href="/logout" id="nav-logout-link" class="nav-link">Logout</a>
+      {% else %}
+        <a href="#" id="nav-login-link" class="nav-link">Login</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- ── Page content ───────────────────── -->
+  <div class="page-wide">
+
+    <div class="page-header">
+      <h1 class="page-title">Admin Dashboard</h1>
+      <p class="page-subtitle">Overview of system activity, reports, and searches.</p>
+    </div>
+
+    <!-- ── Stats overview ─────────────────── -->
+
+    <!-- ── Toolbar: city filter + export ───── -->
+    <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <label for="city-filter" style="font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap;">
+        Filter by City
+      </label>
+      <select id="city-filter" style="
+        padding:       8px 14px;
+        border:        1px solid var(--border);
+        border-radius: var(--radius);
+        font-family:   var(--font);
+        font-size:     14px;
+        background:    var(--surface);
+        color:         var(--text);
+        cursor:        pointer;
+        outline:       none;
+        transition:    border 0.18s;
+        min-width:     180px;
+      ">
+        <option value="">All Cities</option>
+      </select>
+      <a
+        href="/api/export"
+        id="export-btn"
+        class="btn btn-outline btn-sm"
+        download="dashboard_data.csv"
+        title="Download all report and search data as CSV"
+        style="white-space: nowrap; text-decoration: none;"
+      >
+        ⬇ Export CSV
+      </a>
+    </div>
+
+    <div class="dashboard-stats-row">
+
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-number" id="stat-reports">—</div>
+        <div class="dashboard-stat-label">Total stolen reports</div>
+      </div>
+
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-number" id="stat-checks">—</div>
+        <div class="dashboard-stat-label">Total devices checked</div>
+      </div>
+
+      <div class="dashboard-stat-card">
+        <div class="dashboard-stat-number" id="stat-locations">—</div>
+        <div class="dashboard-stat-label">Locations covered</div>
+      </div>
+
+    </div>
+
+    <!-- ── Two-column grid: reports + searches ── -->
+
+    <!-- ── Table search bar ──────────────────── -->
+    <div class="dashboard-search-bar">
+      <input
+        type="text"
+        id="table-search"
+        placeholder="Search IMEI or location..."
+      />
+    </div>
+
+    <!-- ── Recent Stolen Reports (full width) ─ -->
+    <div class="section dashboard-table-section">
+
+      <div class="dashboard-table-header">
+        <span class="section-label" style="margin-bottom:0;">Recent Stolen Reports</span>
+        <span class="dashboard-table-count" id="reports-count"></span>
+      </div>
+
+      <div class="dashboard-empty" id="reports-no-match" style="display:none;">
+        No matching results.
+      </div>
+
+      {% if recent_reports %}
+        <div class="dashboard-table-wrap">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th style="min-width:150px;">IMEI</th>
+                <th style="min-width:140px;">Model</th>
+                <th style="min-width:120px;">Location</th>
+                <th style="min-width:96px;">Date</th>
+                <th style="min-width:72px;">Status</th>
+                {% if session.get("role") == "admin" %}
+                  <th style="min-width:120px; text-align:right;">Actions</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody id="reports-tbody">
+              {% for r in recent_reports %}
+              <tr
+                data-id="{{ r.id }}"
+                data-imei="{{ r.imei_1 }}"
+                data-model="{{ r.model_name or '' }}"
+                data-location="{{ r.place_of_theft or '' }}"
+                data-date="{{ r.reported_at or '' }}"
+              >
+                <td class="mono">{{ r.imei_1 }}</td>
+                <td>{{ r.model_name or '—' }}</td>
+                <td class="muted">{{ r.place_of_theft or '—' }}</td>
+                <td class="muted">{{ r.reported_at[:10] if r.reported_at else '—' }}</td>
+                <td>
+                  <span class="table-badge table-badge-stolen">Stolen</span>
+                </td>
+                {% if session.get("role") == "admin" %}
+                <td>
+                  <div class="dashboard-actions">
+                    <button
+                      class="btn btn-outline btn-sm"
+                      onclick="openEditModal(this.closest('tr'))"
+                    >Edit</button>
+                    <button
+                      class="btn btn-danger btn-sm"
+                      onclick="deleteReport(this.closest('tr'))"
+                    >Delete</button>
+                  </div>
+                </td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="dashboard-empty">No stolen reports yet.</div>
+      {% endif %}
+
+    </div>
+
+    <!-- ── Recent IMEI Searches (full width) ── -->
+    <div class="section dashboard-table-section">
+
+      <div class="dashboard-table-header">
+        <span class="section-label" style="margin-bottom:0;">Recent IMEI Searches</span>
+        <span class="dashboard-table-count" id="searches-count"></span>
+      </div>
+
+      <div class="dashboard-empty" id="searches-no-match" style="display:none;">
+        No matching results.
+      </div>
+
+      {% if recent_searches %}
+        <div class="dashboard-table-wrap">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th style="min-width:150px;">IMEI</th>
+                <th style="min-width:100px;">Date</th>
+                <th style="min-width:80px;">Time</th>
+              </tr>
+            </thead>
+            <tbody id="searches-tbody">
+              {% for s in recent_searches %}
+              <tr>
+                <td class="mono">{{ s.imei }}</td>
+                <td class="muted">{{ s.searched_at[:10] if s.searched_at else '—' }}</td>
+                <td class="muted">{{ s.searched_at[11:16] if s.searched_at and s.searched_at|length > 10 else '—' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="dashboard-empty">No searches logged yet.</div>
+      {% endif %}
+
+    </div>
+
+    <!-- ── Charts row ───────────────────────── -->
+    <div class="dashboard-grid" style="margin-bottom: 16px;">
+
+      <!-- Bar chart: Top theft cities -->
+      <div class="section">
+        <div class="section-label">Top Theft Locations</div>
+        <div class="dashboard-empty" id="chart-cities-loading">Loading...</div>
+        <div class="chart-container" style="height: 260px;">
+          <canvas id="chart-cities"></canvas>
+        </div>
+      </div>
+
+      <!-- Doughnut chart: Reports vs Searches overview -->
+      <div class="section">
+        <div class="section-label">Activity Overview</div>
+        <div class="chart-container" style="max-width: 260px; margin: 0 auto;">
+          <canvas id="chart-activity"></canvas>
+        </div>
+        <div class="dashboard-empty" id="chart-activity-empty" style="display: none; margin-top: 12px;">No activity data yet.</div>
+      </div>
+
+    </div>
+
+    <!-- ── Top Theft Locations (list fallback) ── -->
+    <div class="section">
+      <div class="section-label">Location Details</div>
+      {% if top_locations %}
+        {% for loc in top_locations %}
+        <div class="dashboard-location-row">
+          <span class="dashboard-location-name">📍 {{ loc.location }}</span>
+          <span class="dashboard-location-count">{{ loc.count }} report{{ 's' if loc.count != 1 else '' }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="dashboard-empty">No location data available yet.</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+
+
+  <!-- ── Edit Report Modal ─────────────────── -->
+  <div class="login-modal-overlay" id="edit-report-modal" role="dialog" aria-modal="true">
+    <div class="login-modal-card" style="max-width: 440px;">
+      <button class="login-modal-close" id="edit-modal-close">&times;</button>
+      <div class="login-modal-title" style="margin-bottom: 20px;">✏️ Edit Report</div>
+      <div class="login-modal-error" id="edit-modal-error"></div>
+
+      <input type="hidden" id="edit-report-id" />
+
+      <label for="edit-imei">IMEI 1 (Primary)</label>
+      <input type="text" id="edit-imei" maxlength="15" placeholder="15-digit IMEI" />
+
+      <label for="edit-model">Phone Model</label>
+      <input type="text" id="edit-model" placeholder="e.g. Samsung Galaxy S23" />
+
+      <label for="edit-location">Place of Theft</label>
+      <input type="text" id="edit-location" placeholder="e.g. Cairo" />
+
+      <label for="edit-date">Reported At</label>
+      <input type="text" id="edit-date" placeholder="e.g. 2025-03-10 14:00:00" />
+
+      <button class="btn btn-primary" id="edit-submit-btn" style="margin-top: 4px;">
+        Save Changes
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Login Modal ────────────────────── -->
+  <div class="login-modal-overlay" id="login-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="login-modal-card">
+
+      <button class="login-modal-close" id="modal-close" aria-label="Close login">&times;</button>
+
+      <div class="login-modal-title" id="modal-title">🔐 Admin Login</div>
+      <div class="login-modal-subtitle">Sign in to access the dashboard.</div>
+
+      <div class="login-modal-error" id="modal-error"></div>
+
+      <form id="modal-login-form">
+        <label for="modal-username">Username</label>
+        <input
+          type="text"
+          id="modal-username"
+          name="username"
+          placeholder="Enter username"
+          autocomplete="username"
+          required
+        />
+
+        <label for="modal-password">Password</label>
+        <input
+          type="password"
+          id="modal-password"
+          name="password"
+          placeholder="Enter password"
+          autocomplete="current-password"
+          required
+        />
+
+        <button type="submit" class="btn btn-primary" id="modal-submit-btn" style="margin-top: 4px;">
+          Sign In
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ── Logout Confirmation Modal ────────── -->
+  <div class="login-modal-overlay" id="logout-modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+    <div class="login-modal-card" style="max-width: 360px; text-align: center;">
+      <button class="login-modal-close" id="logout-modal-close" aria-label="Cancel logout">&times;</button>
+      <div class="login-modal-title" id="logout-modal-title" style="margin-bottom: 12px;">👋 Logout</div>
+      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6;">
+        Are you sure you want to logout?
+      </p>
+      <div class="btn-group">
+        <a href="/logout" id="logout-confirm-btn" class="btn btn-danger btn-sm">Yes, Logout</a>
+        <button id="logout-cancel-btn" class="btn btn-outline btn-sm">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    // ── Dashboard live data — auto-refreshes every 10 seconds ─────
+    (function () {
+
+      let citiesChart   = null;
+      let activityChart = null;
+      let allData       = null;   // cache last successful API response
+
+      // DOM refs
+      const citiesCanvas   = document.getElementById("chart-cities");
+      const activityCanvas = document.getElementById("chart-activity");
+      const citiesLoading  = document.getElementById("chart-cities-loading");
+      const activityEmpty  = document.getElementById("chart-activity-empty");
+      const elReports      = document.getElementById("stat-reports");
+      const elChecks       = document.getElementById("stat-checks");
+      const elLocations    = document.getElementById("stat-locations");
+      const cityFilter     = document.getElementById("city-filter");
+
+      // ── Populate city filter dropdown ─────────
+      function populateFilter(topCities) {
+        if (!cityFilter) return;
+        const current = cityFilter.value;   // preserve current selection
+        // Remove all options except "All Cities"
+        while (cityFilter.options.length > 1) cityFilter.remove(1);
+        topCities.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value       = c.city;
+          opt.textContent = c.city;
+          cityFilter.appendChild(opt);
+        });
+        // Restore selection if city still exists in new data
+        if (current && topCities.some(c => c.city === current)) {
+          cityFilter.value = current;
+        }
+      }
+
+      // ── Filter data based on dropdown selection ──
+      function getFilteredData() {
+        if (!allData) return { topCities: [], totalReports: 0, totalChecks: 0 };
+
+        const selected   = cityFilter ? cityFilter.value : "";
+        const topCities  = allData.top_cities    || [];
+        const totReports = allData.total_reports || 0;
+        const totChecks  = allData.total_checks  || 0;
+
+        if (!selected) {
+          // All Cities — show full data
+          return { topCities, totalReports: totReports, totalChecks: totChecks };
+        }
+
+        // Single city — filter bar chart, estimate proportional stats
+        const cityData = topCities.find(c => c.city === selected);
+        const cityCount = cityData ? cityData.count : 0;
+
+        return {
+          topCities:    cityData ? [cityData] : [],
+          totalReports: cityCount,
+          totalChecks:  0,   // search logs don't have location — show 0
+        };
+      }
+
+      // ── Render / update bar chart ─────────────
+      function renderCitiesChart(topCities) {
+        if (!citiesCanvas) return;
+
+        if (topCities.length === 0) {
+          citiesCanvas.style.display = "none";
+          return;
+        }
+
+        citiesCanvas.style.display = "block";
+        const labels = topCities.map(c => c.city);
+        const values = topCities.map(c => c.count);
+
+        if (citiesChart) {
+          citiesChart.data.labels           = labels;
+          citiesChart.data.datasets[0].data = values;
+          citiesChart.update("none");
+          return;
+        }
+
+        citiesChart = new Chart(citiesCanvas, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [{
+              label:           "Theft reports",
+              data:            values,
+              backgroundColor: "rgba(229, 57, 53, 0.75)",
+              borderColor:     "rgba(229, 57, 53, 1)",
+              borderWidth:     1,
+              borderRadius:    6,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            animation:  { duration: 300 },
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} report${ctx.parsed.y !== 1 ? "s" : ""}` } }
+            },
+            scales: {
+              y: { beginAtZero: true, ticks: { stepSize: 1, color: "#7a8499" }, grid: { color: "rgba(0,0,0,0.05)" } },
+              x: { ticks: { color: "#7a8499" }, grid: { display: false } }
+            }
+          }
+        });
+      }
+
+      // ── Render / update doughnut chart ────────
+      function renderActivityChart(totalReports, totalChecks) {
+        if (!activityCanvas) return;
+        const hasData = totalReports > 0 || totalChecks > 0;
+
+        if (!hasData) {
+          if (activityEmpty) activityEmpty.style.display = "block";
+          activityCanvas.style.display = "none";
+          return;
+        }
+
+        activityCanvas.style.display = "block";
+        if (activityEmpty) activityEmpty.style.display = "none";
+
+        if (activityChart) {
+          activityChart.data.datasets[0].data = [totalReports, totalChecks];
+          activityChart.update("none");
+          return;
+        }
+
+        activityChart = new Chart(activityCanvas, {
+          type: "doughnut",
+          data: {
+            labels: ["Stolen Reports", "IMEI Checks"],
+            datasets: [{
+              data:            [totalReports, totalChecks],
+              backgroundColor: ["rgba(229,57,53,0.8)", "rgba(26,115,232,0.8)"],
+              borderColor:     ["rgba(229,57,53,1)",   "rgba(26,115,232,1)"],
+              borderWidth: 2, hoverOffset: 6,
+            }]
+          },
+          options: {
+            responsive: true, cutout: "65%",
+            animation:  { duration: 300 },
+            plugins: {
+              legend: { position: "bottom", labels: { color: "#7a8499", padding: 16, font: { size: 12 } } },
+              tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } }
+            }
+          }
+        });
+      }
+
+      // ── Apply current filter and re-render ────
+      function applyFilter() {
+        const { topCities, totalReports, totalChecks } = getFilteredData();
+        if (elReports)   elReports.textContent   = totalReports.toLocaleString();
+        if (elChecks)    elChecks.textContent     = totalChecks.toLocaleString();
+        if (elLocations) elLocations.textContent  = topCities.length.toLocaleString();
+        renderCitiesChart(topCities);
+        renderActivityChart(totalReports, totalChecks);
+      }
+
+      // ── Fetch from API and refresh everything ──
+      async function refresh(isFirstLoad) {
+        try {
+          const res  = await fetch("/api/stats");
+          const data = await res.json();
+          allData    = data;   // cache for filter re-use
+
+          if (isFirstLoad && citiesLoading) citiesLoading.style.display = "none";
+
+          populateFilter(data.top_cities || []);
+          applyFilter();
+
+        } catch (err) {
+          console.error("[Dashboard] Failed to fetch /api/stats:", err);
+          if (isFirstLoad && citiesLoading) citiesLoading.textContent = "Failed to load data.";
+        }
+      }
+
+      // ── City filter change handler ─────────────
+      if (cityFilter) {
+        cityFilter.addEventListener("change", applyFilter);
+        // Focus style
+        cityFilter.addEventListener("focus",  () => cityFilter.style.borderColor = "var(--blue)");
+        cityFilter.addEventListener("blur",   () => cityFilter.style.borderColor = "");
+      }
+
+      // ── Initial load + polling ─────────────────
+      refresh(true);
+      setInterval(() => refresh(false), 10000);
+
+    })();
+
+    // ── Real-time table search ────────────────
+    (function () {
+      const searchInput     = document.getElementById("table-search");
+      const reportsTbody    = document.getElementById("reports-tbody");
+      const searchesTbody   = document.getElementById("searches-tbody");
+      const reportsNoMatch  = document.getElementById("reports-no-match");
+      const searchesNoMatch = document.getElementById("searches-no-match");
+
+      if (!searchInput) return;
+
+      function filterTable(tbody, noMatchEl, query) {
+        if (!tbody) return;
+        let visibleCount = 0;
+        const rows = tbody.querySelectorAll("tr");
+
+        rows.forEach(row => {
+          const text  = row.textContent.toLowerCase();
+          const match = !query || text.includes(query);
+          row.style.display = match ? "" : "none";
+          if (match) visibleCount++;
+        });
+
+        // Show "No matching results" if all rows are hidden
+        if (noMatchEl) {
+          noMatchEl.style.display = (rows.length > 0 && visibleCount === 0) ? "block" : "none";
+        }
+      }
+
+      searchInput.addEventListener("input", function () {
+        const query = searchInput.value.trim().toLowerCase();
+        filterTable(reportsTbody,  reportsNoMatch,  query);
+        filterTable(searchesTbody, searchesNoMatch, query);
+      });
+
+    })();
+
+
+    // ── Admin: Edit & Delete report actions ─────────────────────
+    (function () {
+
+      const editModal    = document.getElementById("edit-report-modal");
+      const editClose    = document.getElementById("edit-modal-close");
+      const editError    = document.getElementById("edit-modal-error");
+      const editSubmit   = document.getElementById("edit-submit-btn");
+
+      function openEditModal(row) {
+        document.getElementById("edit-report-id").value = row.dataset.id;
+        document.getElementById("edit-imei").value      = row.dataset.imei;
+        document.getElementById("edit-model").value     = row.dataset.model;
+        document.getElementById("edit-location").value  = row.dataset.location;
+        document.getElementById("edit-date").value      = row.dataset.date;
+        editError.classList.remove("visible");
+        editModal.classList.add("open");
+        document.getElementById("edit-imei").focus();
+      }
+
+      function closeEditModal() {
+        editModal.classList.remove("open");
+      }
+
+      // Expose to inline onclick handlers
+      window.openEditModal = openEditModal;
+
+      if (editClose) editClose.addEventListener("click", closeEditModal);
+      editModal.addEventListener("click", e => { if (e.target === editModal) closeEditModal(); });
+      document.addEventListener("keydown", e => {
+        if (e.key === "Escape" && editModal.classList.contains("open")) closeEditModal();
+      });
+
+      // Submit edit via fetch
+      if (editSubmit) {
+        editSubmit.addEventListener("click", async function () {
+          const id    = document.getElementById("edit-report-id").value;
+          const imei  = document.getElementById("edit-imei").value.trim();
+          const model = document.getElementById("edit-model").value.trim();
+          const loc   = document.getElementById("edit-location").value.trim();
+          const date  = document.getElementById("edit-date").value.trim();
+
+          if (!imei) {
+            editError.textContent = "Primary IMEI is required.";
+            editError.classList.add("visible");
+            return;
+          }
+
+          editSubmit.disabled    = true;
+          editSubmit.textContent = "Saving...";
+          editError.classList.remove("visible");
+
+          try {
+            const res  = await fetch(`/api/reports/${id}`, {
+              method:  "PUT",
+              headers: { "Content-Type": "application/json" },
+              body:    JSON.stringify({
+                imei_1:         imei,
+                model_name:     model,
+                place_of_theft: loc,
+                reported_at:    date,
+              })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+              closeEditModal();
+              refresh(false);   // re-fetch dashboard data
+            } else {
+              editError.textContent = data.error || "Update failed.";
+              editError.classList.add("visible");
+            }
+          } catch (err) {
+            editError.textContent = "Connection error.";
+            editError.classList.add("visible");
+          }
+
+          editSubmit.disabled    = false;
+          editSubmit.textContent = "Save Changes";
+        });
+      }
+
+      // Delete with confirmation modal reuse
+      window.deleteReport = async function (row) {
+        const id = row.dataset.id;
+
+        // Simple confirm — upgrade to custom modal if desired
+        if (!confirm("Delete this report? This cannot be undone.")) return;
+
+        try {
+          const res  = await fetch(`/api/reports/${id}`, { method: "DELETE" });
+          const data = await res.json();
+          if (data.success) {
+            row.remove();
+          } else {
+            alert(data.error || "Delete failed.");
+          }
+        } catch (err) {
+          alert("Connection error.");
+        }
+      };
+
+    })();
+
+  </script>
+
+</body>
+</html>

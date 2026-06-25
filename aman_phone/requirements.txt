@@ -1,0 +1,21 @@
+# ── Core framework ─────────────────────────
+flask
+werkzeug
+
+# ── Image processing ────────────────────────
+# Pillow works on Windows via pip with no extra setup
+pillow
+
+# ── Barcode / QR scanning ───────────────────
+# pyzbar works on Windows but requires ZBar DLLs.
+# Place libiconv.dll and libzbar-64.dll in the project root.
+# Install: pip install pyzbar
+pyzbar
+
+# ── YOLOv8 (barcode region detection) ───────
+# Requires PyTorch. On Windows, install the CPU build first:
+#
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#
+# Then run: pip install -r requirements.txt
+ultralytics

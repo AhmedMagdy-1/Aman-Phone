@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AMAN PHONE – Result</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- ── Navigation ─────────────────────── -->
+  <nav class="nav-header">
+    <a href="/" class="nav-brand">🛡️ AMAN <span>PHONE</span></a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    <div class="nav-links">
+      <a href="/"       class="nav-link{% if active_page == 'home'   %} active{% endif %}">Home</a>
+      <a href="/check"  class="nav-link{% if active_page == 'check'  %} active{% endif %}">Check</a>
+      <a href="/report" class="nav-link{% if active_page == 'report' %} active{% endif %}">Report</a>
+      {% if session.get('user') %}
+        <a href="/dashboard" class="nav-link{% if active_page == 'dashboard' %} active{% endif %}">Dashboard</a>
+        <a href="/logout" id="nav-logout-link" class="nav-link">Logout</a>
+      {% else %}
+        <a href="#" id="nav-login-link" class="nav-link">Login</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- ── Page content ───────────────────── -->
+  <div class="page">
+
+    <div class="page-header">
+      <h1 class="page-title">Verification Result</h1>
+      <p class="page-subtitle">IMEI check completed. Review the findings below.</p>
+    </div>
+
+    <!-- ── Area warning ─────────────────── -->
+    {% if area_warning %}
+      <div class="alert alert-warning">{{ area_warning }}</div>
+    {% endif %}
+
+    <!-- ── Status hero ──────────────────── -->
+    <div class="status-hero">
+
+      <div class="status-icon">
+        {% if status == "stolen" %}       🔴
+        {% elif status == "suspicious" %} 🟡
+        {% else %}                        🟢
+        {% endif %}
+      </div>
+
+      <div class="status-badge
+        {% if status == 'stolen' %}status-stolen
+        {% elif status == 'suspicious' %}status-suspicious
+        {% else %}status-clean{% endif %}">
+        {{ status | upper }}
+      </div>
+
+      <!-- Detection method badge -->
+      <div>
+        {% if detection_method in ["yolo_barcode", "barcode"] %}
+          <span class="detection-badge detection-barcode">📊 Detected via Barcode / QR</span>
+        {% elif detection_method in ["yolo_ocr", "ocr"] %}
+          <span class="detection-badge detection-ocr">🔤 Detected via OCR</span>
+        {% else %}
+          <span class="detection-badge detection-manual">✏️ Entered Manually</span>
+        {% endif %}
+      </div>
+
+      <p class="status-message">
+        {% if status == "stolen" %}
+          This device has been reported as <strong>stolen</strong>. Do not purchase or use this phone.
+        {% elif status == "suspicious" %}
+          This device has been searched <strong>multiple times</strong> recently. Proceed with caution.
+        {% else %}
+          No issues found. This device appears to be <strong>clean</strong> and has not been reported stolen.
+        {% endif %}
+      </p>
+
+    </div>
+
+    <!-- ── IMEI display ──────────────────── -->
+    <div class="section">
+      <div class="section-label">IMEI</div>
+      <div class="imei-block">
+        <div class="imei-value" id="result-imei-1">{{ imei }}</div>
+      </div>
+    </div>
+
+    <!-- ── Stolen report details ─────────── -->
+    {% if status == "stolen" and report %}
+    <div class="report-panel">
+      <div class="report-panel-title">📋 Stolen Report Details</div>
+
+      {% if report.owner_name %}
+      <div class="report-row">
+        <span class="report-key">Owner</span>
+        <span class="report-val">{{ report.owner_name }}</span>
+      </div>
+      {% endif %}
+
+      {% if report.phone_number %}
+      <div class="report-row">
+        <span class="report-key">Phone No.</span>
+        <span class="report-val">{{ report.phone_number }}</span>
+      </div>
+      {% endif %}
+
+      {% if report.email %}
+      <div class="report-row">
+        <span class="report-key">Email</span>
+        <span class="report-val">{{ report.email }}</span>
+      </div>
+      {% endif %}
+
+      {% if report.model_name %}
+      <div class="report-row">
+        <span class="report-key">Model</span>
+        <span class="report-val">{{ report.model_name }}</span>
+      </div>
+      {% endif %}
+
+      {% if report.color %}
+      <div class="report-row">
+        <span class="report-key">Color</span>
+        <span class="report-val">{{ report.color }}</span>
+      </div>
+      {% endif %}
+
+      {% if report.place_of_theft %}
+      <div class="report-row">
+        <span class="report-key">Stolen At</span>
+        <span class="report-val">{{ report.place_of_theft }}</span>
+      </div>
+      {% endif %}
+
+      {% if report.reported_at %}
+      <div class="report-row">
+        <span class="report-key">Reported</span>
+        <span class="report-val">{{ report.reported_at }}</span>
+      </div>
+      {% endif %}
+
+    </div>
+    {% endif %}
+
+    <!-- ── Action buttons ────────────────── -->
+    <div class="btn-group">
+      <a href="/check" class="btn btn-outline btn-sm">Check Another</a>
+      {% if status != "stolen" %}
+        <a href="/report" class="btn btn-danger btn-sm">Report as Stolen</a>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ── Login Modal ────────────────────── -->
+  <div class="login-modal-overlay" id="login-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="login-modal-card">
+      <button class="login-modal-close" id="modal-close" aria-label="Close login">&times;</button>
+      <div class="login-modal-title" id="modal-title">🔐 Admin Login</div>
+      <div class="login-modal-subtitle">Sign in to access the dashboard.</div>
+      <div class="login-modal-error" id="modal-error"></div>
+      <form id="modal-login-form">
+        <label for="modal-username">Username</label>
+        <input type="text" id="modal-username" name="username" placeholder="Enter username" autocomplete="username" required />
+        <label for="modal-password">Password</label>
+        <input type="password" id="modal-password" name="password" placeholder="Enter password" autocomplete="current-password" required />
+        <button type="submit" class="btn btn-primary" id="modal-submit-btn" style="margin-top: 4px;">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Logout Confirmation Modal ────────── -->
+  <div class="login-modal-overlay" id="logout-modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+    <div class="login-modal-card" style="max-width: 360px; text-align: center;">
+      <button class="login-modal-close" id="logout-modal-close" aria-label="Cancel logout">&times;</button>
+      <div class="login-modal-title" id="logout-modal-title" style="margin-bottom: 12px;">👋 Logout</div>
+      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6;">Are you sure you want to logout?</p>
+      <div class="btn-group">
+        <a href="/logout" id="logout-confirm-btn" class="btn btn-danger btn-sm">Yes, Logout</a>
+        <button id="logout-cancel-btn" class="btn btn-outline btn-sm">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

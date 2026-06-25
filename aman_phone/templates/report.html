@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AMAN PHONE – Report Stolen</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- ── Navigation ─────────────────────── -->
+  <nav class="nav-header">
+    <a href="/" class="nav-brand">🛡️ AMAN <span>PHONE</span></a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    <div class="nav-links">
+      <a href="/"       class="nav-link{% if active_page == 'home'   %} active{% endif %}">Home</a>
+      <a href="/check"  class="nav-link{% if active_page == 'check'  %} active{% endif %}">Check</a>
+      <a href="/report" class="nav-link{% if active_page == 'report' %} active{% endif %}">Report</a>
+      {% if session.get('user') %}
+        <a href="/dashboard" class="nav-link{% if active_page == 'dashboard' %} active{% endif %}">Dashboard</a>
+        <a href="/logout" id="nav-logout-link" class="nav-link">Logout</a>
+      {% else %}
+        <a href="#" id="nav-login-link" class="nav-link">Login</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- ── Page content ───────────────────── -->
+  <div class="page">
+
+    <div class="page-header">
+      <h1 class="page-title">Report a Stolen Phone</h1>
+      <p class="page-subtitle">Submit a stolen device to the AMAN PHONE database.</p>
+    </div>
+
+    {% if error %}
+      <div class="alert alert-error">⚠️ {{ error }}</div>
+    {% endif %}
+
+    <form id="report-form" action="/report" method="POST" enctype="multipart/form-data">
+
+      <!-- Hidden IMEI field for report page — synced by JS -->
+      <input type="hidden" id="imei-hidden" name="imei_1" />
+
+      <!-- ── Section: IMEI ──────────────────── -->
+      <div class="section">
+        <div class="section-label">Device IMEI</div>
+
+        <!-- Upload view (default) -->
+        <div id="upload-view">
+          <div class="drop-zone" id="drop-zone" role="button" tabindex="0" aria-label="Upload Phone Label or Box Photo">
+            <input type="file" id="image-input" name="image" accept="image/*" class="drop-zone__input" />
+            <div class="drop-zone__content" id="drop-zone-content">
+              <div class="drop-zone__icon">📷</div>
+              <div class="drop-zone__title">Drop image here or <span>click to browse</span></div>
+              <div class="drop-zone__hint">JPG, PNG, WEBP — phone box or label</div>
+            </div>
+            <img class="drop-zone__preview" id="drop-zone-preview" src="" alt="Preview" />
+          </div>
+
+          <div class="scan-status" id="scan-status" style="display:none;"></div>
+
+          <button type="button" class="btn btn-outline" id="manual-toggle-btn" style="margin-top: 8px;">
+            ✏️ Enter IMEI manually
+          </button>
+        </div>
+
+        <!-- Manual input view (hidden by default) -->
+        <div id="manual-view" style="display:none;">
+          <label for="imei-manual">IMEI <span class="required">*</span></label>
+          <input
+            type="text"
+            id="imei-manual"
+            placeholder="15-digit IMEI (e.g. 354923041234567)"
+            maxlength="15"
+            autocomplete="off"
+          />
+          <div class="scan-status" id="manual-status" style="display:none;"></div>
+          <button type="button" class="btn btn-outline" id="back-to-scan-btn" style="margin-bottom: 12px;">
+            ← Back to image scan
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Section: Device Information ─── -->
+      <div class="section">
+        <div class="section-label">Device Information</div>
+
+        <label for="model-input">
+          Phone Model <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="model-input"
+          name="model_name"
+          placeholder="e.g. Samsung Galaxy S23 Ultra"
+          required
+          aria-required="true"
+        />
+
+        <label for="color-input">
+          Color <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="color-input"
+          name="color"
+          placeholder="e.g. Phantom Black"
+          required
+          aria-required="true"
+        />
+      </div>
+
+      <!-- ── Section: Owner Information ──── -->
+      <div class="section">
+        <div class="section-label">Owner Information</div>
+
+        <label for="owner-input">
+          Full Name <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="owner-input"
+          name="owner_name"
+          placeholder="e.g. Ahmed Mohamed"
+          required
+          aria-required="true"
+        />
+
+        <label for="phone-input">
+          Phone Number <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="phone-input"
+          name="phone_number"
+          placeholder="e.g. 01012345678"
+          maxlength="15"
+          required
+          aria-required="true"
+        />
+
+        <label for="email-input">
+          Email Address <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="email-input"
+          name="email"
+          placeholder="e.g. ahmed@example.com"
+          maxlength="150"
+          required
+          aria-required="true"
+        />
+      </div>
+
+      <!-- ── Section: Theft Details ────────── -->
+      <div class="section">
+        <div class="section-label">Theft Details</div>
+
+        <label for="place-input">
+          Place of Theft <span class="required">*</span>
+        </label>
+        <div class="dropdown-wrapper" id="place-wrapper">
+          <input
+            type="text"
+            id="place-input"
+            placeholder="Type to search a city..."
+            autocomplete="off"
+            aria-label="Place of Theft"
+          />
+          <input type="hidden" id="place-hidden" name="place_of_theft" />
+          <div class="dropdown-list" id="place-dropdown" role="listbox"></div>
+        </div>
+      </div>
+
+      <button type="submit" id="submit-btn" class="btn btn-danger">
+        Report as Stolen
+      </button>
+
+    </form>
+
+  </div>
+
+  <!-- ── Login Modal ────────────────────── -->
+  <div class="login-modal-overlay" id="login-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="login-modal-card">
+      <button class="login-modal-close" id="modal-close" aria-label="Close login">&times;</button>
+      <div class="login-modal-title" id="modal-title">🔐 Admin Login</div>
+      <div class="login-modal-subtitle">Sign in to access the dashboard.</div>
+      <div class="login-modal-error" id="modal-error"></div>
+      <form id="modal-login-form">
+        <label for="modal-username">Username</label>
+        <input type="text" id="modal-username" name="username" placeholder="Enter username" autocomplete="username" required />
+        <label for="modal-password">Password</label>
+        <input type="password" id="modal-password" name="password" placeholder="Enter password" autocomplete="current-password" required />
+        <button type="submit" class="btn btn-primary" id="modal-submit-btn" style="margin-top: 4px;">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Logout Confirmation Modal ────────── -->
+  <div class="login-modal-overlay" id="logout-modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+    <div class="login-modal-card" style="max-width: 360px; text-align: center;">
+      <button class="login-modal-close" id="logout-modal-close" aria-label="Cancel logout">&times;</button>
+      <div class="login-modal-title" id="logout-modal-title" style="margin-bottom: 12px;">👋 Logout</div>
+      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6;">Are you sure you want to logout?</p>
+      <div class="btn-group">
+        <a href="/logout" id="logout-confirm-btn" class="btn btn-danger btn-sm">Yes, Logout</a>
+        <button id="logout-cancel-btn" class="btn btn-outline btn-sm">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
